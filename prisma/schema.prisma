@@ -1,0 +1,244 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PetStatus {
+  PERDIDO
+  ENCONTRADO
+  ENADOPCION
+  ADOPTADO
+}
+
+enum AdoptionStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+enum ReportStatus {
+  PENDIENTE
+  RESUELTO
+  RECHAZADO
+}
+
+enum UserRole {
+  ADMINISTRADOR
+  USUARIO
+}
+
+enum UserStatus {
+  ACTIVO
+  INACTIVO
+}
+
+enum AnimalType {
+  PERRO
+  GATO
+  OTRO
+}
+
+enum Gender {
+  MACHO
+  HEMBRA
+}
+
+enum Size {
+  PEQUENO
+  MEDIANO
+  GRANDE
+}
+
+enum PreferredLanguage {
+  ES
+  EN
+}
+
+//Definición de modelos
+
+model User {
+  id                  Int               @id @default(autoincrement())
+  nombre              String
+  apellido            String
+  pais                String
+  foto_perfil         String
+  direccion           String
+  numero_contacto     String
+  fecha_nacimiento    DateTime
+  correo              String            @unique
+  contrasena          String
+  role                UserRole          @default(USUARIO)
+  idioma_preferido    PreferredLanguage @default(ES)
+  modo_oscuro         Boolean           @default(false)
+  doble_autenticacion Boolean           @default(false)
+  estado              UserStatus        @default(ACTIVO)
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+
+  //Relaciones
+  pets             Pet[]             @relation("UserPets")
+  posts            Post[]
+  comments         Comment[]
+  adoptionRequests AdoptionRequest[] @relation("UserAdoptionRequests")
+  reports          Report[]          @relation("UserReports")
+  notifications    Notification[]
+  sentMessages     Message[]         @relation("SentMessages")
+  receivedMessages Message[]         @relation("ReceivedMessages")
+  followers        UserFollow[]      @relation("Followers")
+  following        UserFollow[]      @relation("Following")
+  favorites        Favorite[]
+  sightings        Sighting[]
+}
+
+model Pet {
+  id               Int        @id @default(autoincrement())
+  nombre           String
+  tipo_animal      AnimalType
+  raza             String
+  pelaje           String
+  color_ojos       String
+  sexo             Gender
+  fecha_nacimiento DateTime
+  tamano           Size
+  estado           PetStatus
+  descripcion      String
+  imagen_url       String
+  validado         Boolean    @default(false)
+  owner_id         Int
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+
+  //Relaciones
+  owner            User              @relation("UserPets", fields: [owner_id], references: [id])
+  posts            Post[]
+  adoptionRequests AdoptionRequest[]
+  sightings        Sighting[]
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  pet_id      Int
+  titulo      String
+  descripcion String
+  ubicacion   String
+  estado      PetStatus
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relaciones
+  user      User       @relation(fields: [user_id], references: [id])
+  pet       Pet        @relation(fields: [pet_id], references: [id])
+  comments  Comment[]
+  favorites Favorite[]
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  post_id    Int
+  user_id    Int
+  contenido  String
+  created_at DateTime @default(now())
+
+  // Relaciones
+  post Post @relation(fields: [post_id], references: [id])
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model AdoptionRequest {
+  id         Int            @id @default(autoincrement())
+  pet_id     Int
+  adopter_id Int
+  estado     AdoptionStatus @default(PENDIENTE)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  // Relaciones
+  pet     Pet  @relation(fields: [pet_id], references: [id])
+  adopter User @relation("UserAdoptionRequests", fields: [adopter_id], references: [id])
+}
+
+model Report {
+  id            Int          @id @default(autoincrement())
+  tipo_elemento String // 'post', 'comment', 'user'
+  elemento_id   Int
+  reported_by   Int
+  razon         String
+  estado        ReportStatus @default(PENDIENTE)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  // Relaciones
+  reportedBy User @relation("UserReports", fields: [reported_by], references: [id])
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  mensaje    String
+  leido      Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Relaciones
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  sender_id   Int
+  receiver_id Int
+  contenido   String
+  sent_at     DateTime @default(now())
+
+  // Relaciones
+  sender   User @relation("SentMessages", fields: [sender_id], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiver_id], references: [id])
+}
+
+model UserFollow {
+  follower_id Int
+  followed_id Int
+  created_at  DateTime @default(now())
+
+  // Relaciones
+  follower User @relation("Following", fields: [follower_id], references: [id])
+  followed User @relation("Followers", fields: [followed_id], references: [id])
+
+  @@id([follower_id, followed_id])
+}
+
+model Favorite {
+  user_id    Int
+  post_id    Int
+  created_at DateTime @default(now())
+
+  // Relaciones
+  user User @relation(fields: [user_id], references: [id])
+  post Post @relation(fields: [post_id], references: [id])
+
+  @@id([user_id, post_id])
+}
+
+model Sighting {
+  id          Int      @id @default(autoincrement())
+  pet_id      Int
+  user_id     Int
+  latitud     Decimal  @db.Decimal(9, 6)
+  longitud    Decimal  @db.Decimal(9, 6)
+  descripcion String
+  created_at  DateTime @default(now())
+
+  // Relaciones
+  pet  Pet  @relation(fields: [pet_id], references: [id])
+  user User @relation(fields: [user_id], references: [id])
+}
