@@ -13,6 +13,7 @@ export const register = async (req: Request, res: Response) => {
       direccion,
       numero_contacto,
       fecha_nacimiento,
+      cuenta,
       correo,
       contrasena,
       role,
@@ -31,6 +32,7 @@ export const register = async (req: Request, res: Response) => {
         direccion,
         numero_contacto,
         fecha_nacimiento: new Date(fecha_nacimiento), // Aseguramos que sea un objeto Date
+        cuenta,
         correo,
         contrasena,
         role,

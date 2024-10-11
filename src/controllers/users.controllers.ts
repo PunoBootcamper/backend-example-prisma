@@ -29,6 +29,7 @@ export const createUser = async (
       direccion,
       numero_contacto,
       fecha_nacimiento,
+      cuenta,
       correo,
       contrasena,
       role,
@@ -50,6 +51,7 @@ export const createUser = async (
         direccion,
         numero_contacto,
         fecha_nacimiento: new Date(fecha_nacimiento), // Aseguramos que sea un objeto Date
+        cuenta,
         correo,
         contrasena: hashedPassword,
         role,
