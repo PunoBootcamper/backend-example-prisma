@@ -50,11 +50,12 @@ export const register = async (req: Request, res: Response) => {
     const token = await createAccessToken({ id: newUser.id });
 
     res.cookie("token", token);
-    
+
     res.status(201).json({
-    message: "Usuario creado",
-    username: newUser.cuenta,
-    email: newUser.correo,
+      message: "Usuario creado",
+      id: newUser.id,
+      username: newUser.cuenta,
+      email: newUser.correo,
     });
   } catch (error) {
     console.error(error);
@@ -63,5 +64,46 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  res.send("login");
+  const { cuenta, contrasena } = req.body;
+
+  try {
+    console.log(cuenta);
+    const userFound = await prisma.user.findUnique({
+      where: {
+        cuenta,
+      },
+    });
+
+    console.log(userFound);
+
+    if (!userFound) {
+      res.status(404).json({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(contrasena, userFound.contrasena);
+
+    if (!isMatch) {
+      res.status(401).json({ error: "Contraseña incorrecta" });
+      return;
+    }
+
+    const token = await createAccessToken({ id: userFound.id });
+
+    res.cookie("token", token);
+
+    res.status(201).json({
+      id: userFound.id,
+      username: userFound.cuenta,
+      email: userFound.correo,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  res.cookie("token", "", { expires: new Date(0) });
+  res.status(200).json({ message: "Sesión cerrada" });
 };
