@@ -1,4 +1,4 @@
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import { prisma } from "../database";
 import { User } from "../types/models";
 import { UserRole, UserStatus, PreferredLanguage } from "../types/enums";
@@ -107,3 +107,8 @@ export const logout = async (req: Request, res: Response) => {
   res.cookie("token", "", { expires: new Date(0) });
   res.status(200).json({ message: "Sesión cerrada" });
 };
+
+export const profile = async (req: Request, res: Response) => {
+  console.log(req.user);
+  res.json({ message: "Profile" });
+}
