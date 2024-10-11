@@ -17,7 +17,6 @@ export const authRequired = (req: Request, res: Response, next: NextFunction) =>
             res.status(401).json({error: "Invalid token"});
             return
         }
-        console.log(user);
         req.user = user;
         next();
     })

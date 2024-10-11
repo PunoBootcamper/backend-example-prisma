@@ -109,6 +109,17 @@ export const logout = async (req: Request, res: Response) => {
 };
 
 export const profile = async (req: Request, res: Response) => {
-  console.log(req.user);
+  
+  if (req.user) {
+    if (typeof req.user !== 'string' && 'id' in req.user) {
+      console.log(req.user.id);
+    } else {
+      res.status(401).json({ error: "Usuario no autenticado" });
+      return;
+    }
+  } else {
+    res.status(401).json({ error: "Usuario no autenticado" });
+    return;
+  }
   res.json({ message: "Profile" });
 }
