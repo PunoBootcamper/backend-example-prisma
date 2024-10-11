@@ -1,12 +1,12 @@
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { prisma } from "../database";
 import { User } from "../types/models";
 import { UserRole, UserStatus, PreferredLanguage } from "../types/enums";
 import bcrypt from "bcrypt";
+import { createAccessToken } from "../libs/jwt";
 
 export const register = async (req: Request, res: Response) => {
   try {
-
     const {
       nombre,
       apellido,
@@ -47,7 +47,15 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json({ message: "Usuario creado", username: newUser.cuenta, email: newUser.correo });
+    const token = await createAccessToken({ id: newUser.id });
+
+    res.cookie("token", token);
+    
+    res.status(201).json({
+    message: "Usuario creado",
+    username: newUser.cuenta,
+    email: newUser.correo,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error interno del servidor" });
