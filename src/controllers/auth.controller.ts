@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import { prisma } from "../database";
 import { User } from "../types/models";
 import { UserRole, UserStatus, PreferredLanguage } from "../types/enums";
+import bcrypt from "bcrypt";
 
 export const register = async (req: Request, res: Response) => {
   try {
+
     const {
       nombre,
       apellido,
@@ -23,6 +25,8 @@ export const register = async (req: Request, res: Response) => {
       estado,
     } = req.body;
 
+    const passwordHash = await bcrypt.hash(contrasena, 10);
+
     const newUser = await prisma.user.create({
       data: {
         nombre,
@@ -34,7 +38,7 @@ export const register = async (req: Request, res: Response) => {
         fecha_nacimiento: new Date(fecha_nacimiento), // Aseguramos que sea un objeto Date
         cuenta,
         correo,
-        contrasena,
+        contrasena: passwordHash,
         role,
         idioma_preferido,
         modo_oscuro,
@@ -43,7 +47,7 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json({ message: "Usuario creado", user: newUser });
+    res.status(201).json({ message: "Usuario creado", username: newUser.cuenta, email: newUser.correo });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error interno del servidor" });
